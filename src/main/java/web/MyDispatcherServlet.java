@@ -1,52 +1,65 @@
 package web;
 
-import java.io.IOException;
-import javax.servlet.ServletException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import java.io.IOException;
 
 public class MyDispatcherServlet extends HttpServlet {
 
-	private AnnotationConfigApplicationContext webCtx;
+    private AnnotationConfigApplicationContext webCtx;
 
-	@Override
-	public void init() throws ServletException {
-		Class<?> webConfigClass = getWebConfigClass();
-		webCtx = new AnnotationConfigApplicationContext(webConfigClass);
+    @Override
+    public void init() {
+        Class<?> webConfigClass = getWebConfigClass();
+        webCtx = new AnnotationConfigApplicationContext(webConfigClass);
 
-		//TODO: webCtx.setParent(parentContext);
-		// should be loaded parent context with business logic
-	}
+        webCtx.setParent(parentContext());
+        //TODO: webCtx.setParent(parentContext);
+        // should be loaded parent context with business logic
+    }
 
-	private Class<?> getWebConfigClass() {
-		String contextConfigClass =
-				getInitParameter("contextConfigLocation");
+    private Class<?> getParentConfigClass() {
+        String contextRootConfigLocation = getInitParameter("contextConfigLocation");
+        try {
+            return Class.forName(contextRootConfigLocation);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-		try {
-			  return Class.forName(contextConfigClass);
-		}
-		catch (ClassNotFoundException e) {
-			throw new RuntimeException(e);
-		}
-	}
+    private ApplicationContext parentContext() {
+        return new AnnotationConfigApplicationContext(getParentConfigClass());
+    }
 
-	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
+    private Class<?> getWebConfigClass() {
+        String contextConfigClass =
+                getServletContext().getInitParameter("contextConfigLocation");
 
-		String controllerName = getControllerNameFromRequest(req);
-		System.out.println(controllerName);
-		MyController controller =
-				(MyController) webCtx.getBean(controllerName);
-		controller.handleRequest(req, resp);
-	}
+        try {
+            return Class.forName(contextConfigClass);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-	private String getControllerNameFromRequest(HttpServletRequest req) {
-		String requestURI = req.getRequestURI();
-		String name = requestURI.substring(requestURI.lastIndexOf("/") + 1);
-		return name;
-	}
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException {
+
+        String controllerName = getControllerNameFromRequest(req);
+        System.out.println(controllerName);
+        MyController controller =
+                (MyController) webCtx.getBean(controllerName);
+        controller.handleRequest(req, resp);
+    }
+
+    private String getControllerNameFromRequest(HttpServletRequest req) {
+        String requestURI = req.getRequestURI();
+        return requestURI.substring(requestURI.lastIndexOf("/") + 1);
+    }
 }
