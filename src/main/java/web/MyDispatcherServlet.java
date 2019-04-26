@@ -15,29 +15,21 @@ public class MyDispatcherServlet extends HttpServlet {
     @Override
     public void init() {
         Class<?> webConfigClass = getWebConfigClass();
-        webCtx = new AnnotationConfigApplicationContext(webConfigClass);
-
-        webCtx.setParent(parentContext());
+        webCtx = new AnnotationConfigApplicationContext();
+        webCtx.register(webConfigClass);
         //TODO: webCtx.setParent(parentContext);
         // should be loaded parent context with business logic
-    }
-
-    private Class<?> getParentConfigClass() {
-        String contextRootConfigLocation = getInitParameter("contextConfigLocation");
-        try {
-            return Class.forName(contextRootConfigLocation);
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
+        webCtx.setParent(parentContext());
+        webCtx.refresh();
     }
 
     private ApplicationContext parentContext() {
-        return new AnnotationConfigApplicationContext(getParentConfigClass());
+        Object parentContext = getServletContext().getAttribute("parentContext");
+        return (ApplicationContext) parentContext;
     }
 
     private Class<?> getWebConfigClass() {
-        String contextConfigClass =
-                getServletContext().getInitParameter("contextConfigLocation");
+        String contextConfigClass = getInitParameter("contextWebConfigLocation");
 
         try {
             return Class.forName(contextConfigClass);
@@ -46,13 +38,9 @@ public class MyDispatcherServlet extends HttpServlet {
         }
     }
 
-
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-            throws IOException {
-
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String controllerName = getControllerNameFromRequest(req);
-        System.out.println(controllerName);
         MyController controller =
                 (MyController) webCtx.getBean(controllerName);
         controller.handleRequest(req, resp);

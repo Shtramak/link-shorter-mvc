@@ -19,7 +19,7 @@
         <servlet-name>DispatcherServlet</servlet-name>
         <servlet-class>web.MyDispatcherServlet</servlet-class>
         <init-param>
-            <param-name>contextConfigLocation</param-name>
+            <param-name>contextWebConfigLocation</param-name>
             <param-value>shorter.WebConfig</param-value>
         </init-param>
     </servlet>
