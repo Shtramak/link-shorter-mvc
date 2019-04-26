@@ -2,14 +2,12 @@ package shorter;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import shorter.controller.FullController;
 import shorter.controller.HelloController;
 import shorter.controller.ShorterController;
 import web.MyController;
 
 @Configuration
-@Import(AppConfig.class)
 public class WebConfig {
 
     @Bean
